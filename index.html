@@ -375,7 +375,50 @@ async function fillPlaceholders(text){
   return out;
 }
 
-function copyToClipboard(t){ navigator.clipboard.writeText(t).then(()=>toast('Copied')).catch(()=>{ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('Copied'); }); }
+function copyToClipboard(t){ 
+  console.log('Attempting to copy:', t);
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t)
+      .then(() => {
+        console.log('Copy successful via clipboard API');
+        toast('Copied');
+      })
+      .catch((err) => {
+        console.log('Clipboard API failed, trying fallback:', err);
+        fallbackCopy(t);
+      });
+  } else {
+    console.log('Clipboard API not available, using fallback');
+    fallbackCopy(t);
+  }
+}
+
+function fallbackCopy(t) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = t;
+    ta.style.position = 'fixed';
+    ta.style.left = '-999999px';
+    ta.style.top = '-999999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const result = document.execCommand('copy');
+    document.body.removeChild(ta);
+    
+    if (result) {
+      console.log('Fallback copy successful');
+      toast('Copied');
+    } else {
+      console.log('Fallback copy failed');
+      toast('Copy failed');
+    }
+  } catch (err) {
+    console.log('Fallback copy error:', err);
+    toast('Copy failed');
+  }
+}
 function toast(msg){ 
   const t=document.createElement('div'); 
   t.textContent=msg; 
@@ -519,24 +562,36 @@ els.tagMenu.addEventListener('change', ()=>{ renderTagDropdown(); renderTable();
 window.addEventListener('click', (e)=>{ if(!els.tagDropdown.contains(e.target)) els.tagDropdown.removeAttribute('open'); });
 
 els.tableBody.addEventListener('click', async (e)=>{
-  const tr = e.target.closest('tr'); if(!tr) return; const id=tr.dataset.id; const item = state.items.find(x=>x.id===id); if(!item) return;
+  // Only handle button clicks, not row clicks
+  if (!e.target.closest('button')) return;
+  
+  const tr = e.target.closest('tr'); 
+  if(!tr) return; 
+  
+  const id = tr.dataset.id; 
+  const item = state.items.find(x=>x.id===id); 
+  if(!item) return;
+  
   const action = e.target.getAttribute('data-action');
-  if(action==='edit'){ loadForm(item); }
-  if(action==='copy'){
-    let text=item.content; const vars=placeholders(text);
-    if(vars.length) { const filled = await fillPlaceholders(text); if(filled===null) return; text=filled; }
-    copyToClipboard(text);
+  
+  if(action==='edit'){ 
+    loadForm(item); 
   }
-  if(action==='delete'){
-    const title = item.title || '(untitled)';
-    showConfirmDialog(
-      'Delete Snippet',
-      `Are you sure you want to delete "${title}"? This action cannot be undone.`,
-      async () => {
-        state.items = state.items.filter(x=>x.id!==id);
-        await persist(); renderTagDropdown(); renderTable(); toast('Deleted');
-      }
-    );
+  
+  if(action==='copy'){
+    e.preventDefault();
+    e.stopPropagation();
+    
+    let text = item.content; 
+    const vars = placeholders(text);
+    
+    if(vars.length) { 
+      const filled = await fillPlaceholders(text); 
+      if(filled === null) return; 
+      text = filled; 
+    }
+    
+    copyToClipboard(text);
   }
 });
 
