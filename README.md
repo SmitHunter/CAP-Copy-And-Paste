@@ -2,7 +2,8 @@
 
 A tiny, single-file desktop app for storing customer-response snippets and quickly reusing them.
 
-![CAP App Screenshot](assets/icon.png)
+<img width="1178" height="789" alt="Example" src="https://github.com/user-attachments/assets/0177c8f3-a246-4011-b673-055559e9867e" />
+
 
 ## What it does
 
