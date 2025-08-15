@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CAP — Copy and Paste</title>
+  <style>
+    :root { 
+      --bg: #0e1116;
+      --panel:#141925;
+      --muted:#a7b3c6;
+      --text:#edf2f7;
+      --accent:#ff5fa2;   /* customizable */
+      --accent-2:#ff86b9; /* lighter for hovers */
+      --border:#1e2636;
+      --input:#0f1420;
+      --danger:#ff6b8a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;background:var(--bg);color:var(--text);} 
+    .wrap{max-width:1300px;margin:8px auto;padding:0 12px}
+    h1{font-size:20px;margin:0 0 6px 0;color:#fff}
+    .topbar{display:flex;gap:6px;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap}
+    .status{font-size:11px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:300px 1fr;gap:12px;align-items:start}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .card h2{font-size:13px;margin:0;padding:8px 10px;border-bottom:1px solid var(--border);color:#f4f6f8}
+    .pad{padding:10px}
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+    input, textarea{width:100%;background:var(--input);color:var(--text);border:1px solid #243046;border-radius:10px;padding:10px 12px;font-size:14px;transition:border-color .15s, box-shadow .15s}
+    input:hover, textarea:hover{border-color:#2c3b55}
+    input:focus, textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent)}
+    textarea{min-height:170px;resize:vertical}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{appearance:none;border:1px solid #2a2d3b;background:linear-gradient(180deg,#171b26,#121722);color:var(--text);padding:9px 12px;border-radius:10px;cursor:pointer;transition:border-color .15s, box-shadow .15s, transform .03s}
+    .btn-compact{padding:4px 6px;font-size:11px;border-radius:6px}
+    .btn-compact .icon{width:12px;height:12px;margin-right:3px}
+    .col-actions .btn-compact{margin:0 2px 0 0}
+    .col-actions .btn-compact:last-child{margin-right:0}
+    .btn:hover{border-color:#3a3f54}
+    .btn:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent)}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+    .btn.primary:hover{box-shadow:inset 0 0 0 2px var(--accent-2)}
+    .btn.danger{border-color:#2a2d3b;background:linear-gradient(180deg,#171b26,#121722);color:var(--text);transition:all .15s}
+    .btn.danger:hover{border-color:#3a2631;background:#161018;color:#ffd7df}
+    .muted{color:var(--muted);font-size:12px}
+
+    /* Theme controls - compact settings */
+    .settings-toggle{position:relative}
+    .settings-btn{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid #2a2d3b;border-radius:10px;background:linear-gradient(180deg,#171b26,#121722);cursor:pointer;transition:border-color .15s}
+    .settings-btn:hover{border-color:#3a3f54}
+    .settings-btn .icon{width:16px;height:16px}
+    .settings-panel{position:absolute;top:44px;right:0;min-width:280px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;display:none;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .settings-toggle.open .settings-panel{display:block}
+    .color-input{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .color-input input[type="color"]{width:40px;height:32px;border:1px solid #2a2d3b;border-radius:6px;background:none;cursor:pointer}
+    .color-input input[type="text"]{width:100px;font-size:12px}
+
+    /* Tools + table */
+    .tools{display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+    .tbl-wrap{max-height:calc(100vh - 150px); /* show more rows */
+      overflow:auto;border-radius:8px;border:1px solid var(--border)}
+    table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+    thead th{position:sticky;top:0;background:#101726;border-bottom:1px solid var(--border);text-align:left;padding:6px 8px;font-size:12px;font-weight:500}
+    tbody td{border-bottom:1px solid var(--border);padding:6px 8px;vertical-align:top;line-height:1.3}
+    tbody tr:hover{background:#101622}
+    .col-title{width:22%}
+    .col-tags{width:22%}
+    .col-content{width:50%}
+    .col-actions{width:6%;text-align:right}
+    .pill{display:inline-block;padding:1px 6px;border:1px solid #2b3340;border-radius:999px;margin:0 4px 3px 0;color:#cfe0f3;background:rgba(255,255,255,.03);font-size:10px;line-height:1.2}
+
+    /* Compact dropdown for tags */
+    details.dropdown{position:relative}
+    details.dropdown>summary{list-style:none;display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:1px solid #2a2d3b;border-radius:10px;background:linear-gradient(180deg,#171b26,#121722);cursor:pointer}
+    details.dropdown>summary::-webkit-details-marker{display:none}
+    details.dropdown>summary:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent)}
+    .menu{position:absolute;top:42px;left:0;min-width:160px;max-width:200px;max-height:200px;overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:6px;display:none;z-index:10}
+    details[open] .menu{display:block}
+    .chk{display:flex;align-items:center;gap:6px;padding:4px 2px;font-size:12px}
+    .badge{font-size:11px;color:#ffd1e6;border:1px solid #3a2b36;border-radius:999px;padding:0 6px}
+
+    /* Icons */
+    .icon{width:14px;height:14px;display:inline-block;margin-right:6px;fill:currentColor}
+    .btn-icon{display:flex;align-items:center;gap:6px}
+
+    /* Loading spinner */
+    .spinner{width:14px;height:14px;border:2px solid var(--muted);border-top:2px solid var(--accent);border-radius:50%;animation:spin 1s linear infinite;display:inline-block}
+    @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+    .loading .spinner{margin-right:6px}
+
+    /* Custom modal */
+    .modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:opacity 0.2s, visibility 0.2s}
+    .modal.show{opacity:1;visibility:visible}
+    .modal-content{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+    .modal h3{margin:0 0 12px 0;color:#fff;font-size:16px}
+    .modal p{margin:0 0 20px 0;color:var(--muted);line-height:1.4}
+    .modal-actions{display:flex;gap:8px;justify-content:flex-end}
+
+    /* Keyboard navigation */
+    .table-row{cursor:pointer}
+    .table-row:focus{outline:2px solid var(--accent);outline-offset:-2px;background:#101622}
+    .table-row.selected{background:#0a1018;border-left:3px solid var(--accent)}
+
+    /* Better empty states */
+    .empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+    .empty-state h3{color:#fff;margin:0 0 8px 0;font-size:16px}
+    .empty-state p{margin:0 0 16px 0;line-height:1.4}
+    .empty-icon{font-size:48px;margin-bottom:16px;opacity:0.5}
+
+    /* Toast notifications */
+    .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0f1420;border:1px solid var(--accent);padding:8px 12px;border-radius:10px;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.35);z-index:9999}
+
+    /* Responsive design */
+    @media (max-width: 1200px) {
+      .col-title{width:26%}
+      .col-tags{width:18%}
+      .col-content{width:48%}
+      .col-actions{width:8%}
+    }
+    @media (max-width: 800px) {
+      .grid{grid-template-columns:1fr;gap:12px}
+      .col-title{width:30%}
+      .col-tags{width:25%}
+      .col-content{width:35%}
+      .col-actions{width:10%}
+      .btn-compact .icon{margin-right:0}
+      .btn-compact{padding:3px 5px;font-size:10px}
+    }
+    @media (max-width: 600px) {
+      .btn-compact span{display:none}
+      .btn-compact{padding:3px 4px}
+      .btn-compact .icon{width:10px;height:10px}
+      .col-actions{width:12%}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>CAP — Copy and Paste</h1>
+
+    <div class="topbar">
+      <div class="status" id="fileStatus">Data file: Application data (auto)</div>
+      <div class="settings-toggle" id="settingsToggle">
+        <div class="settings-btn" id="settingsBtn">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+          Settings
+        </div>
+        <div class="settings-panel">
+          <label style="display:block;margin-bottom:8px;font-size:14px;color:#f4f6f8">Theme Color</label>
+          <div class="color-input">
+            <input type="color" id="accentColor" value="#ff5fa2" aria-label="Choose accent color" />
+            <input type="text" id="accentHex" value="#ff5fa2" maxlength="7" placeholder="#RRGGBB" />
+            <button class="btn" id="saveThemeBtn">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Create / Edit</h2>
+        <div class="pad">
+          <input type="hidden" id="id" />
+          <label>Title</label>
+          <input id="title" placeholder="e.g., Refund policy – online orders" />
+          <label>Tags (comma separated)</label>
+          <input id="tags" placeholder="refunds, delivery, online" />
+          <label>Content</label>
+          <textarea id="content" placeholder="Enter your message content here..."></textarea>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="clearBtn">Clear</button>
+            <button class="btn danger" id="deleteBtn" title="Delete this snippet">Delete</button>
+            <div style="flex:1"></div>
+            <button class="btn primary" id="saveBtn">Save snippet</button>
+          </div>
+          <div class="muted" style="margin-top:8px">Ctrl/Cmd + S to save quickly.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Search & Use</h2>
+        <div class="pad">
+          <div class="tools">
+            <input id="searchTitle" placeholder="Search title" />
+            <details id="tagDropdown" class="dropdown">
+              <summary id="tagSummary">Tags</summary>
+              <div class="menu" id="tagMenu"></div>
+            </details>
+            <button class="btn" id="clearFiltersBtn">Clear filters</button>
+            <div style="flex:1"></div>
+            <button class="btn" id="newBtn">New</button>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-title">Title</th>
+                  <th class="col-tags">Tags</th>
+                  <th class="col-content">Content (preview)</th>
+                  <th class="col-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom confirmation modal -->
+  <div id="confirmModal" class="modal">
+    <div class="modal-content">
+      <h3 id="confirmTitle">Confirm Action</h3>
+      <p id="confirmMessage">Are you sure you want to proceed?</p>
+      <div class="modal-actions">
+        <button class="btn" id="confirmCancel">Cancel</button>
+        <button class="btn danger" id="confirmOk">Delete</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// SVG Icons as strings
+const icons = {
+  copy: '<svg class="icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>',
+  edit: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>',
+  delete: '<svg class="icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>',
+  add: '<svg class="icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>',
+  search: '<svg class="icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>'
+};
+// === CAP app (Electron-friendly, auto-saves to app data) ===
+const storeKey = 'cap_snippets_v1';
+const themeKey = 'cap_accent_hex';
+const $ = sel => document.querySelector(sel);
+const els = {
+  id:$('#id'), title:$('#title'), tags:$('#tags'), content:$('#content'),
+  fileStatus:$('#fileStatus'),
+  searchTitle:$('#searchTitle'), tagDropdown:$('#tagDropdown'), tagMenu:$('#tagMenu'), tagSummary:$('#tagSummary'),
+  clearFiltersBtn:$('#clearFiltersBtn'), tableBody:$('#tableBody'),
+  accentColor:$('#accentColor'), accentHex:$('#accentHex'), saveThemeBtn:$('#saveThemeBtn')
+};
+
+function uid(){ return crypto.randomUUID ? crypto.randomUUID() : 'id_'+Date.now()+Math.random().toString(16).slice(2); }
+function loadLocal(){ try{ return JSON.parse(localStorage.getItem(storeKey)||'[]'); }catch(e){ return []; } }
+function saveLocal(items){ localStorage.setItem(storeKey, JSON.stringify(items)); }
+
+let state = { items: [], dataPath: null, selectedRowIndex: -1, isLoading: false };
+
+// ---------- Theme ----------
+function clamp(n,min,max){ return Math.min(max, Math.max(min, n)); }
+function hexToRgb(hex){ hex = hex.replace('#',''); if(hex.length===3) hex = hex.split('').map(c=>c+c).join(''); const n=parseInt(hex,16); return {r:(n>>16)&255,g:(n>>8)&255,b:n&255}; }
+function rgbToHex(r,g,b){ return '#' + [r,g,b].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function lighten(hex, amt=0.2){ const {r,g,b}=hexToRgb(hex); const rr=clamp(Math.round(r+(255-r)*amt),0,255); const gg=clamp(Math.round(g+(255-g)*amt),0,255); const bb=clamp(Math.round(b+(255-b)*amt),0,255); return rgbToHex(rr,gg,bb); }
+function applyAccent(hex){ document.documentElement.style.setProperty('--accent', hex); document.documentElement.style.setProperty('--accent-2', lighten(hex, 0.35)); }
+function initTheme(){ const saved = localStorage.getItem(themeKey); if(saved){ els.accentColor.value = saved; els.accentHex.value = saved; applyAccent(saved); } }
+
+els.accentColor.addEventListener('input', ()=>{ els.accentHex.value = els.accentColor.value; applyAccent(els.accentColor.value); });
+els.accentHex.addEventListener('input', ()=>{ const v = els.accentHex.value.trim(); if(/^#?[0-9a-fA-F]{6}$/.test(v)){ const hex = v.startsWith('#')?v:'#'+v; els.accentColor.value = hex; applyAccent(hex); }});
+els.saveThemeBtn.addEventListener('click', ()=>{ const v = els.accentColor.value; localStorage.setItem(themeKey, v); toast('Theme saved'); });
+
+// Settings toggle functionality
+$('#settingsBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  $('#settingsToggle').classList.toggle('open');
+});
+
+// Close settings when clicking outside
+window.addEventListener('click', (e) => {
+  if (!$('#settingsToggle').contains(e.target)) {
+    $('#settingsToggle').classList.remove('open');
+  }
+});
+
+// ---------- Data I/O ----------
+async function loadData(){
+  if(window.api && window.api.dataLoad){
+    try{ const res = await window.api.dataLoad(); state.dataPath = res.path || null; state.items = Array.isArray(JSON.parse(res.text||'[]')) ? JSON.parse(res.text||'[]') : []; }
+    catch(e){ console.warn('dataLoad failed, falling back to localStorage', e); state.items = loadLocal(); }
+  } else {
+    state.items = loadLocal();
+  }
+  updateStatus();
+}
+
+async function saveData(){
+  // always keep a local backup
+  saveLocal(state.items);
+  if(window.api && window.api.dataSave){
+    try{ await window.api.dataSave(JSON.stringify(state.items, null, 2)); }
+    catch(e){ console.warn('dataSave failed, kept local backup', e); }
+  }
+}
+
+function updateStatus(){ els.fileStatus.textContent = `Data file: ${state.dataPath ? state.dataPath : 'Application data (auto)'}`; }
+
+// ---------- UI helpers ----------
+function escapeHtml(s){ return (s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function truncate(s, n){ s=s||''; return s.length>n ? s.slice(0,n-1)+'…' : s; }
+
+function collectForm(){ return { id: els.id.value || uid(), title: els.title.value.trim(), tags: els.tags.value.split(',').map(t=>t.trim()).filter(Boolean), content: els.content.value }; }
+function loadForm(sn){ els.id.value=sn.id; els.title.value=sn.title; els.tags.value=(sn.tags||[]).join(', '); els.content.value=sn.content; }
+function clearForm(){ els.id.value=''; els.title.value=''; els.tags.value=''; els.content.value=''; }
+
+function allTags(items){ const s=new Set(); items.forEach(i=> (i.tags||[]).forEach(t=>s.add(t))); return Array.from(s).sort((a,b)=>a.localeCompare(b)); }
+function selectedTags(){ return Array.from(els.tagMenu.querySelectorAll('input[type="checkbox"]:checked')).map(cb=>cb.value); }
+
+function renderTagDropdown(){
+  const tags = allTags(state.items);
+  const selected = new Set(selectedTags());
+  els.tagMenu.innerHTML = tags.map(t=>`
+    <label class="chk"><input type="checkbox" value="${escapeHtml(t)}" ${selected.has(t)?'checked':''}/> ${escapeHtml(t)}</label>
+  `).join('') || '<div class="muted" style="padding:6px 4px">No tags yet</div>';
+  const count = selected.size; els.tagSummary.innerHTML = count? `Tags <span class="badge">${count}</span>` : 'Tags';
+}
+
+function renderTable(){
+  const q = (els.searchTitle.value||'').toLowerCase().trim();
+  const tags = selectedTags();
+  const filteredItems = state.items.filter(i=>{
+    const okTitle = !q || (i.title||'').toLowerCase().includes(q);
+    const okTags = tags.length===0 || (tags.every(t => (i.tags||[]).includes(t)));
+    return okTitle && okTags;
+  });
+
+  if (filteredItems.length === 0) {
+    const isEmpty = state.items.length === 0;
+    const emptyContent = isEmpty ? `
+      <tr><td colspan="4" class="empty-state">
+        <div class="empty-icon">📝</div>
+        <h3>No snippets yet</h3>
+        <p>Create your first snippet using the form on the left. Add a title, tags, and content for quick reuse.</p>
+        <button class="btn primary" onclick="$('#newBtn').click()">Create First Snippet</button>
+      </td></tr>
+    ` : `
+      <tr><td colspan="4" class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>No matching snippets</h3>
+        <p>Try adjusting your search terms or tag filters.</p>
+        <button class="btn" onclick="$('#clearFiltersBtn').click()">Clear Filters</button>
+      </td></tr>
+    `;
+    els.tableBody.innerHTML = emptyContent;
+    state.selectedRowIndex = -1;
+    return;
+  }
+
+  const rows = filteredItems.map((i, idx) => `
+    <tr data-id="${i.id}" data-index="${idx}" class="table-row" tabindex="0">
+      <td class="col-title">${escapeHtml(i.title||'(untitled)')}</td>
+      <td class="col-tags">${(i.tags||[]).map(t=>`<span class="pill">${escapeHtml(t)}</span>`).join('')}</td>
+      <td class="col-content">${escapeHtml(truncate(i.content, 240))}</td>
+      <td class="col-actions">
+        <button class="btn btn-compact btn-icon" data-action="copy" title="Copy to clipboard">${icons.copy}Copy</button>
+        <button class="btn btn-compact btn-icon" data-action="edit" title="Edit snippet">${icons.edit}Edit</button>
+      </td>
+    </tr>`).join('');
+  
+  els.tableBody.innerHTML = rows;
+  updateSelectedRow();
+}
+
+function placeholders(text){ return Array.from(new Set((text.match(/\{\{(.*?)\}\}/g)||[]).map(m=>m.slice(2,-2).trim()).filter(Boolean))); }
+function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+async function fillPlaceholders(text){
+  const vars = placeholders(text); let out = text;
+  for (const v of vars) {
+    const val = prompt(`Value for {{${v}}}:`, '');
+    if (val === null) return null; // cancel
+    const re = new RegExp('\\{\\{\\s*' + escapeRegExp(v) + '\\s*\\}\\}', 'g');
+    out = out.replace(re, val);
+  }
+  return out;
+}
+
+function copyToClipboard(t){ navigator.clipboard.writeText(t).then(()=>toast('Copied')).catch(()=>{ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('Copied'); }); }
+function toast(msg){ 
+  const t=document.createElement('div'); 
+  t.textContent=msg; 
+  t.className='toast';
+  document.body.appendChild(t); 
+  setTimeout(()=>t.remove(),1400); 
+}
+
+// Loading state management
+function setLoading(isLoading, buttonEl = null) {
+  state.isLoading = isLoading;
+  if (buttonEl) {
+    if (isLoading) {
+      buttonEl.disabled = true;
+      buttonEl.classList.add('loading');
+      const originalContent = buttonEl.innerHTML;
+      buttonEl.dataset.originalContent = originalContent;
+      buttonEl.innerHTML = '<span class="spinner"></span>' + buttonEl.textContent;
+    } else {
+      buttonEl.disabled = false;
+      buttonEl.classList.remove('loading');
+      if (buttonEl.dataset.originalContent) {
+        buttonEl.innerHTML = buttonEl.dataset.originalContent;
+        delete buttonEl.dataset.originalContent;
+      }
+    }
+  }
+}
+
+// Custom confirmation dialog
+function showConfirmDialog(title, message, onConfirm, confirmText = 'Delete') {
+  const modal = $('#confirmModal');
+  const titleEl = $('#confirmTitle');
+  const messageEl = $('#confirmMessage');
+  const okBtn = $('#confirmOk');
+  
+  titleEl.textContent = title;
+  messageEl.textContent = message;
+  okBtn.textContent = confirmText;
+  okBtn.className = confirmText === 'Delete' ? 'btn danger' : 'btn primary';
+  
+  modal.classList.add('show');
+  
+  const cleanup = () => {
+    modal.classList.remove('show');
+    okBtn.removeEventListener('click', handleConfirm);
+    $('#confirmCancel').removeEventListener('click', cleanup);
+    modal.removeEventListener('click', handleModalClick);
+    document.removeEventListener('keydown', handleEscape);
+  };
+  
+  const handleConfirm = () => {
+    cleanup();
+    onConfirm();
+  };
+  
+  const handleModalClick = (e) => {
+    if (e.target === modal) cleanup();
+  };
+  
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') cleanup();
+  };
+  
+  okBtn.addEventListener('click', handleConfirm);
+  $('#confirmCancel').addEventListener('click', cleanup);
+  modal.addEventListener('click', handleModalClick);
+  document.addEventListener('keydown', handleEscape);
+  
+  okBtn.focus();
+}
+
+// Keyboard navigation helpers
+function updateSelectedRow() {
+  const rows = Array.from(els.tableBody.querySelectorAll('.table-row'));
+  rows.forEach((row, idx) => {
+    row.classList.toggle('selected', idx === state.selectedRowIndex);
+  });
+}
+
+function navigateTable(direction) {
+  const rows = els.tableBody.querySelectorAll('.table-row');
+  if (rows.length === 0) return;
+  
+  if (direction === 'down') {
+    state.selectedRowIndex = Math.min(state.selectedRowIndex + 1, rows.length - 1);
+  } else if (direction === 'up') {
+    state.selectedRowIndex = Math.max(state.selectedRowIndex - 1, 0);
+  }
+  
+  updateSelectedRow();
+  rows[state.selectedRowIndex]?.focus();
+}
+
+async function persist(){ 
+  setLoading(true, $('#saveBtn'));
+  await saveData(); 
+  setLoading(false, $('#saveBtn'));
+}
+
+// --- Events ---
+(async function init(){
+  initTheme();
+  await loadData();
+  renderTagDropdown();
+  renderTable();
+})();
+
+$('#saveBtn').addEventListener('click', async ()=>{
+  const item=collectForm();
+  const i=state.items.findIndex(x=>x.id===item.id);
+  if(i>-1) state.items[i]=item; else state.items.unshift(item);
+  await persist(); renderTagDropdown(); renderTable(); toast('Saved');
+});
+
+$('#deleteBtn').addEventListener('click', async ()=>{
+  if(!els.id.value) return;
+  const item = state.items.find(x => x.id === els.id.value);
+  const title = item ? item.title || '(untitled)' : 'this snippet';
+  
+  showConfirmDialog(
+    'Delete Snippet',
+    `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+    async () => {
+      state.items = state.items.filter(x=>x.id!==els.id.value);
+      await persist(); renderTagDropdown(); renderTable(); clearForm(); toast('Deleted');
+    }
+  );
+});
+
+$('#clearBtn').addEventListener('click', clearForm);
+$('#newBtn').addEventListener('click', ()=>{ clearForm(); $('#title').focus(); });
+
+els.searchTitle.addEventListener('input', renderTable);
+els.clearFiltersBtn.addEventListener('click', ()=>{ els.searchTitle.value=''; els.tagDropdown.removeAttribute('open'); els.tagMenu.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false); renderTagDropdown(); renderTable(); });
+
+// update tag summary count when toggling
+els.tagMenu.addEventListener('change', ()=>{ renderTagDropdown(); renderTable(); });
+
+// close dropdown when clicking outside
+window.addEventListener('click', (e)=>{ if(!els.tagDropdown.contains(e.target)) els.tagDropdown.removeAttribute('open'); });
+
+els.tableBody.addEventListener('click', async (e)=>{
+  const tr = e.target.closest('tr'); if(!tr) return; const id=tr.dataset.id; const item = state.items.find(x=>x.id===id); if(!item) return;
+  const action = e.target.getAttribute('data-action');
+  if(action==='edit'){ loadForm(item); }
+  if(action==='copy'){
+    let text=item.content; const vars=placeholders(text);
+    if(vars.length) { const filled = await fillPlaceholders(text); if(filled===null) return; text=filled; }
+    copyToClipboard(text);
+  }
+  if(action==='delete'){
+    const title = item.title || '(untitled)';
+    showConfirmDialog(
+      'Delete Snippet',
+      `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+      async () => {
+        state.items = state.items.filter(x=>x.id!==id);
+        await persist(); renderTagDropdown(); renderTable(); toast('Deleted');
+      }
+    );
+  }
+});
+
+// Enhanced keyboard navigation
+window.addEventListener('keydown', (e) => {
+  // Ctrl/Cmd+S to save
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ 
+    e.preventDefault(); 
+    $('#saveBtn').click(); 
+    return;
+  }
+  
+  // Escape key handling
+  if (e.key === 'Escape') {
+    // Close tag dropdown if open
+    if (els.tagDropdown.hasAttribute('open')) {
+      els.tagDropdown.removeAttribute('open');
+      return;
+    }
+    
+    // Clear form if editing
+    if (els.id.value) {
+      clearForm();
+      $('#title').focus();
+      return;
+    }
+  }
+  
+  // Arrow key navigation in table
+  if (document.activeElement && document.activeElement.closest('.table-row')) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      navigateTable('down');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigateTable('up');
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      // Trigger edit action on Enter/Space
+      const editBtn = document.activeElement.querySelector('[data-action="edit"]');
+      if (editBtn) editBtn.click();
+    }
+  }
+  
+  // Focus table on Tab from search area
+  if (e.key === 'Tab' && !e.shiftKey) {
+    const activeEl = document.activeElement;
+    if (activeEl === els.searchTitle || activeEl === $('#clearFiltersBtn') || activeEl.closest('#tagDropdown')) {
+      const firstRow = els.tableBody.querySelector('.table-row');
+      if (firstRow) {
+        e.preventDefault();
+        state.selectedRowIndex = 0;
+        updateSelectedRow();
+        firstRow.focus();
+      }
+    }
+  }
+});
+
+// Table row focus handling
+els.tableBody.addEventListener('focus', (e) => {
+  if (e.target.closest('.table-row')) {
+    const row = e.target.closest('.table-row');
+    const index = parseInt(row.dataset.index);
+    if (!isNaN(index)) {
+      state.selectedRowIndex = index;
+      updateSelectedRow();
+    }
+  }
+}, true);
+
+// Click to select table rows
+els.tableBody.addEventListener('click', (e) => {
+  const row = e.target.closest('.table-row');
+  if (row && !e.target.closest('button')) {
+    const index = parseInt(row.dataset.index);
+    if (!isNaN(index)) {
+      state.selectedRowIndex = index;
+      updateSelectedRow();
+      row.focus();
+    }
+  }
+});
+</script>
+</body>
+</html>

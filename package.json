@@ -1,0 +1,43 @@
+{
+  "name": "cap",
+  "version": "1.0.0",
+  "description": "CAP — Copy And Paste",
+  "main": "main.js",
+  "author": "You",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.0.0",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.example.cap",
+    "productName": "CAP",
+    "files": [
+      "**/*",
+      "!dist/**",
+      "!node_modules/**/.cache/**"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico",
+      "sign": null,
+      "verifyUpdateCodeSignature": false
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  }
+}

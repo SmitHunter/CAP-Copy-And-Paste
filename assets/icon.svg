@@ -1,0 +1,27 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#1a1f2e"/>
+  
+  <!-- Paper background -->
+  <path d="M120 80 L392 80 L450 138 L450 430 Q450 450 430 450 L140 450 Q120 470 120 450 L120 80 Z" fill="#f8fafc" stroke="none"/>
+  
+  <!-- Folded corner -->
+  <path d="M392 80 L392 138 L450 138 Z" fill="#e2e8f0"/>
+  
+  <!-- Folded corner shadow -->
+  <path d="M392 80 L392 138 L450 138 Z" fill="#cbd5e1" opacity="0.5"/>
+  
+  <!-- Text lines representing snippets -->
+  <rect x="160" y="180" width="240" height="12" rx="6" fill="#64748b"/>
+  <rect x="160" y="210" width="180" height="12" rx="6" fill="#64748b"/>
+  <rect x="160" y="240" width="200" height="12" rx="6" fill="#64748b"/>
+  
+  <rect x="160" y="290" width="220" height="12" rx="6" fill="#64748b"/>
+  <rect x="160" y="320" width="160" height="12" rx="6" fill="#64748b"/>
+  
+  <rect x="160" y="370" width="190" height="12" rx="6" fill="#64748b"/>
+  <rect x="160" y="400" width="210" height="12" rx="6" fill="#64748b"/>
+  
+  <!-- Accent element (small highlight on corner) -->
+  <circle cx="420" cx="120" r="6" fill="#ff5fa2"/>
+</svg>
